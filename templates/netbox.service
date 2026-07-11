@@ -1,0 +1,22 @@
+[Unit]
+Description=NetBox WSGI Service
+Documentation=https://netboxlabs.com/docs/netbox/
+After=network-online.target postgresql.service redis.service
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=@@NETBOX_RUN_USER@@
+Group=@@NETBOX_RUN_USER@@
+PIDFile=@@NETBOX_DIR@@/netbox.pid
+WorkingDirectory=@@NETBOX_DIR@@
+ExecStart=@@NETBOX_DIR@@/venv/bin/gunicorn --pid @@NETBOX_DIR@@/netbox.pid --pythonpath @@NETBOX_DIR@@/netbox --config @@NETBOX_DIR@@/gunicorn.conf.py netbox.wsgi
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=300
+KillMode=mixed
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
