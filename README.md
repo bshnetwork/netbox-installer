@@ -36,7 +36,7 @@
 ### One-Line Installation
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/babakkeshavarzb-stack/netbox-installer/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/bshnetwork/netbox-installer/main/install.sh | sudo bash
 ```
 
 ### Clone & Run
