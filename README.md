@@ -42,30 +42,41 @@ curl -fsSL https://raw.githubusercontent.com/bshnetwork/netbox-installer/main/in
 ```bash
 curl -fsSL https://raw.githubusercontent.com/bshnetwork/netbox-installer/main/update.sh | sudo bash
 ```
+### Pass any `install.sh` flag after `-s --`, e.g. to use Apache instead of Nginx:
+```bash
+curl -fsSL https://raw.githubusercontent.com/bshnetwork/netbox-installer/main/install.sh | sudo bash -s -- --web apache -y
+```
 
-### Clone & Run
+This downloads the full repo into `/opt/netbox-installer` (override with
+`NETBOX_INSTALLER_SRC_DIR=/some/path`) and re-runs the real installer from
+there, so `uninstall.sh` / `update.sh` are available afterward too:
+```bash
+cd /opt/netbox-installer
+sudo ./update.sh
+sudo ./uninstall.sh
+```
+
+
+### **Local install** (clone/download the repo yourself first):
+
 
 ```bash
-git clone https://github.com/babakkeshavarzb-stack/netbox-installer.git
+git clone https://github.com/bshnetwork/netbox-installer.git
 cd netbox-installer
 sudo ./install.sh
 ```
 
-### Non-Interactive Installation
-
+Non-interactive install with all defaults:
 ```bash
 sudo ./install.sh -y
 ```
 
-### Custom Configuration
-
+Custom config:
 ```bash
 cp config/defaults.conf config/local.conf
 $EDITOR config/local.conf
 sudo ./install.sh --config config/local.conf
 ```
-
----
 
 ## 📂 Project Structure
 
