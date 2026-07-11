@@ -175,7 +175,7 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 ## 📬 Support
 
 - **Issues**: [GitHub Issues](https://github.com/babakkeshavarzb-stack/netbox-installer/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/babakkeshavarzb-stack/netbox-installer/discussions)
+#- **Discussions**: [GitHub Discussions](https://github.com/babakkeshavarzb-stack/netbox-installer/discussions)
 - **Documentation**: Check the [docs](docs/) folder for detailed guides
 
 ---
