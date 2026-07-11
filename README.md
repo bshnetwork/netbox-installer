@@ -8,7 +8,7 @@
 
 ---
 
-## 🚀 Features
+## Features
 
 - **Multi-Platform Support** — Debian/Ubuntu, RHEL/CentOS/Rocky/AlmaLinux, and FreeBSD (experimental)
 - **Modular Architecture** — Clean, maintainable, and extensible codebase
@@ -19,7 +19,7 @@
 
 ---
 
-## 📋 Supported Platforms
+## Supported Platforms
 
 | OS Family | Distribution | Status |
 |-----------|--------------|--------|
@@ -31,7 +31,7 @@
 
 ---
 
-## ⚡ Quick Start
+## Quick Start
 
 ### One-Line Installation
 
