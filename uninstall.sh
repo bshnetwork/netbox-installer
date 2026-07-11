@@ -3,7 +3,11 @@
 # uninstall.sh - Removes NetBox, its service, and (optionally) its database
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+if [ ! -d "$SCRIPT_DIR/lib" ]; then
+    echo "Error: could not find 'lib/' next to uninstall.sh (looked in: $SCRIPT_DIR). Run this from inside the extracted netbox-installer/ folder." >&2
+    exit 1
+fi
 CONFIG_FILE="$SCRIPT_DIR/config/defaults.conf"
 
 while [ $# -gt 0 ]; do
@@ -73,3 +77,5 @@ fi
 
 echo ""
 msg_ok "NetBox has been uninstalled"
+
+
