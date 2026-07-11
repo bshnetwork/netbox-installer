@@ -31,7 +31,7 @@
 
 ---
 
-## Quick Start
+## ⚡ Quick Start
 
 ### One-Line Installation
 
