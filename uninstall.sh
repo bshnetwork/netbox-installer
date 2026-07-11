@@ -1,6 +1,17 @@
 #!/bin/bash
-# babak@linuxbsh.ir
 # uninstall.sh - Removes NetBox, its service, and (optionally) its database
+# babak@linuxbsh.ir
+#
+if [ -z "$BASH_VERSION" ]; then
+    if [ -f "$0" ] && command -v bash >/dev/null 2>&1; then
+        exec bash "$0" "$@"
+    else
+        echo "Error: this script must be run with bash, not sh/dash." >&2
+        echo "Use:   sudo bash uninstall.sh" >&2
+        echo "Or:    curl -fsSL <url>/uninstall.sh | sudo bash" >&2
+        exit 1
+    fi
+fi
 #
 set -e
 
