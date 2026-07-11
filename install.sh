@@ -3,15 +3,17 @@
 # babak@linuxbsh.ir
 set -e
 
+
 GITHUB_REPO="${NETBOX_INSTALLER_REPO:-bshnetwork/netbox-installer}"
 GITHUB_BRANCH="${NETBOX_INSTALLER_BRANCH:-main}"
-INSTALL_SRC_DIR="${NETBOX_INSTALLER_SRC_DIR:-/opt/netbox-installer}"
+
 
 # Resolve the directory this script actually lives in on disk, if any.
 SCRIPT_DIR=""
 if [ -n "${BASH_SOURCE[0]}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
     SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 fi
+
 
 # ---- bootstrap mode: fetch the full repo from GitHub, then re-exec --------
 if [ -z "$SCRIPT_DIR" ] || [ ! -d "$SCRIPT_DIR/lib" ]; then
@@ -22,30 +24,55 @@ if [ -z "$SCRIPT_DIR" ] || [ ! -d "$SCRIPT_DIR/lib" ]; then
     fi
     command -v curl >/dev/null 2>&1 || { echo "Error: curl is required but not installed." >&2; exit 1; }
     command -v tar  >/dev/null 2>&1 || { echo "Error: tar is required but not installed." >&2; exit 1; }
+    command -v mktemp >/dev/null 2>&1 || { echo "Error: mktemp is required but not installed." >&2; exit 1; }
 
-    echo "==> Fetching netbox-installer (${GITHUB_REPO}@${GITHUB_BRANCH}) from GitHub..."
+
+    if [ -n "$NETBOX_INSTALLER_SRC_DIR" ]; then
+        # User asked for a specific, persistent location -- don't clean it up.
+        INSTALL_SRC_DIR="$NETBOX_INSTALLER_SRC_DIR"
+        AUTO_CLEANUP_DIR=""
+        mkdir -p "$INSTALL_SRC_DIR"
+    else
+        INSTALL_SRC_DIR="$(mktemp -d /tmp/netbox-installer.XXXXXX)"
+        AUTO_CLEANUP_DIR="$INSTALL_SRC_DIR"
+    fi
+
+
+    echo "==> Fetching netbox-installer (${GITHUB_REPO}@${GITHUB_BRANCH}) into a temporary directory..."
+
 
     TARBALL_URL="https://github.com/${GITHUB_REPO}/archive/refs/heads/${GITHUB_BRANCH}.tar.gz"
     TMP_TARBALL="$(mktemp /tmp/netbox-installer-XXXXXX.tar.gz)"
 
+
     if ! curl -fsSL -H "User-Agent: netbox-installer" -o "$TMP_TARBALL" "$TARBALL_URL"; then
         rm -f "$TMP_TARBALL"
+        [ -n "$AUTO_CLEANUP_DIR" ] && rm -rf "$AUTO_CLEANUP_DIR"
         echo "Error: failed to download $TARBALL_URL" >&2
-        echo "Check your network settings / the repo & branch name (NETBOX_INSTALLER_REPO=${GITHUB_REPO}, NETBOX_INSTALLER_BRANCH=${GITHUB_BRANCH})." >&2
+        echo "Check your network settings / the repo & branch name (NETBOX_INSTALLER_REPO=${GITHUB_REPO}, NETBOX_INSTALL
         exit 1
     fi
 
-    mkdir -p "$INSTALL_SRC_DIR"
+
     if ! tar -xzf "$TMP_TARBALL" -C "$INSTALL_SRC_DIR" --strip-components=1; then
         rm -f "$TMP_TARBALL"
+        [ -n "$AUTO_CLEANUP_DIR" ] && rm -rf "$AUTO_CLEANUP_DIR"
         echo "Error: failed to extract the downloaded archive." >&2
         exit 1
     fi
     rm -f "$TMP_TARBALL"
 
-    [ -x "$INSTALL_SRC_DIR/install.sh" ] || chmod +x "$INSTALL_SRC_DIR/install.sh"
-    echo "==> Fetched to $INSTALL_SRC_DIR, continuing installation..."
+
+    chmod +x "$INSTALL_SRC_DIR"/*.sh
+    echo "==> Fetched, continuing installation (temp files will be removed when this finishes)..."
     echo ""
+
+
+    # Tell the re-exec'd copy which directory (if any) it's responsible for
+    # deleting once it's done, so cleanup happens after the *entire* install
+    # (success or failure), not right after this bootstrap step.
+    export NETBOX_INSTALLER_AUTO_CLEANUP_DIR="$AUTO_CLEANUP_DIR"
+
 
     # Re-exec the real install.sh from the now-local checkout, forwarding
     # any arguments. Try to re-attach the controlling terminal for stdin so
@@ -59,6 +86,7 @@ if [ -z "$SCRIPT_DIR" ] || [ ! -d "$SCRIPT_DIR/lib" ]; then
     fi
 fi
 
+
 if [ ! -d "$SCRIPT_DIR/lib" ]; then
     echo "Error: could not find the 'lib/' directory next to install.sh (looked in: $SCRIPT_DIR)" >&2
     echo "" >&2
@@ -71,9 +99,22 @@ if [ ! -d "$SCRIPT_DIR/lib" ]; then
     exit 1
 fi
 
+
+# If this checkout was auto-fetched into a temp dir by the bootstrap step
+# above, remove it once this script exits -- successfully or not.
+if [ -n "$NETBOX_INSTALLER_AUTO_CLEANUP_DIR" ] && [ "$NETBOX_INSTALLER_AUTO_CLEANUP_DIR" = "$SCRIPT_DIR" ]; then
+    trap '
+        ec=$?
+        rm -rf "$SCRIPT_DIR"
+        exit $ec
+    ' EXIT
+fi
+
+
 CONFIG_FILE="$SCRIPT_DIR/config/defaults.conf"
 CLI_YES="false"
 CLI_WEB=""
+
 
 # ---- parse CLI args -------------------------------------------------------
 while [ $# -gt 0 ]; do
@@ -88,7 +129,9 @@ while [ $# -gt 0 ]; do
             cat <<EOF
 NetBox Installer
 
+
 Usage: sudo ./install.sh [options]
+
 
 Options:
   --config <file>   Use a custom config file (default: config/defaults.conf)
@@ -102,6 +145,7 @@ EOF
             echo "Unknown option: $1" >&2; exit 1 ;;
     esac
 done
+
 
 # ---- load libraries ---------------------------------------------------
 # shellcheck source=lib/colors.sh
@@ -133,27 +177,33 @@ done
 # shellcheck source=lib/firewall.sh
 . "$SCRIPT_DIR/lib/firewall.sh"
 
+
 # ---- load config --------------------------------------------------------
 [ -f "$CONFIG_FILE" ] || die "Config file not found: $CONFIG_FILE"
 # shellcheck source=config/defaults.conf
 . "$CONFIG_FILE"
 
+
 [ -n "$CLI_WEB" ] && WEB_SERVER="$CLI_WEB"
 [ "$CLI_YES" = "true" ] && ASSUME_YES="true"
 
+
 log_init
 assert_root
+
 
 echo -e "${C_BOLD}=== NetBox Installer ===${C_RESET}"
 echo "Config file: $CONFIG_FILE"
 echo "Log file:    $LOG_FILE"
 echo ""
 
+
 detect_os
 print_os_info
 assert_supported_os
 assert_disk_space 5
 assert_min_ram 3072
+
 
 # Auto-generate secrets that were left as CHANGE_ME
 if [ "$NETBOX_DB_PASSWORD" = "CHANGE_ME" ] && [ "$NETBOX_DB_PASSWORD_AUTOGEN" = "true" ]; then
@@ -163,8 +213,10 @@ if [ "$ADMIN_PASSWORD" = "CHANGE_ME" ] && [ "$ADMIN_PASSWORD_AUTOGEN" = "true" ]
     ADMIN_PASSWORD="$(gen_secret 16)"
 fi
 
+
 validate_config
 resolve_netbox_version
+
 
 msg_step "Installation plan"
 msg_info "NetBox version:  ${NETBOX_VERSION}"
@@ -174,14 +226,18 @@ msg_info "Database:        ${NETBOX_DB} (user: ${NETBOX_USER})"
 msg_info "Web server:      ${WEB_SERVER}"
 confirm "Proceed with installation?" y || die "Aborted by user"
 
+
 pkg_update
 install_build_dependencies
 ensure_netbox_system_user
 
+
 install_postgresql
 setup_netbox_database
 
+
 install_redis
+
 
 fetch_netbox_source
 setup_python_venv
@@ -191,7 +247,9 @@ create_netbox_superuser
 collect_static_files
 configure_gunicorn
 
+
 install_netbox_service
+
 
 case "$WEB_SERVER" in
     nginx)  install_and_configure_nginx ;;
@@ -199,7 +257,9 @@ case "$WEB_SERVER" in
     none)   msg_info "WEB_SERVER=none, skipping reverse proxy setup" ;;
 esac
 
+
 configure_firewall
+
 
 # ---- summary ------------------------------------------------------------
 CREDS_FILE="/root/.netbox-installer-credentials"
@@ -207,9 +267,11 @@ cat > "$CREDS_FILE" <<EOF
 NetBox installation credentials - generated $(date)
 NetBox URL:      http://${SERVER_FQDN:-$SERVER_IP}
 
+
 Admin login:
   Username: $ADMIN_USER
   Password: $ADMIN_PASSWORD
+
 
 Database credentials:
   Database: $NETBOX_DB
@@ -217,6 +279,7 @@ Database credentials:
   Password: $NETBOX_DB_PASSWORD
 EOF
 chmod 600 "$CREDS_FILE"
+
 
 echo ""
 echo -e "${C_GREEN}${C_BOLD}=== Installation Complete! ===${C_RESET}"
@@ -234,6 +297,7 @@ echo "  Password: $NETBOX_DB_PASSWORD"
 echo ""
 echo "These credentials were also saved to: $CREDS_FILE (mode 600, root only)"
 echo ""
+
 
 msg_step "Service status"
 service_status netbox || true
