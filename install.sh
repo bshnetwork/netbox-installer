@@ -1,12 +1,76 @@
 #!/bin/bash
-# install.sh - NetBox Installer Entry Point
+# install.sh - NetBox Installer Entry Point by babak@linuxbsh.ir
 # babak@linuxbsh.ir
-# Usage:
-#   sudo ./install.sh [--config path/to/file.conf] [-y|--yes] [--web nginx|apache|none]
-#
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+GITHUB_REPO="${NETBOX_INSTALLER_REPO:-bshnetwork/netbox-installer}"
+GITHUB_BRANCH="${NETBOX_INSTALLER_BRANCH:-main}"
+INSTALL_SRC_DIR="${NETBOX_INSTALLER_SRC_DIR:-/opt/netbox-installer}"
+
+# Resolve the directory this script actually lives in on disk, if any.
+SCRIPT_DIR=""
+if [ -n "${BASH_SOURCE[0]}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
+    SCRIPT_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+fi
+
+# ---- bootstrap mode: fetch the full repo from GitHub, then re-exec --------
+if [ -z "$SCRIPT_DIR" ] || [ ! -d "$SCRIPT_DIR/lib" ]; then
+    if [ "$EUID" -ne 0 ]; then
+        echo "Error: please run as root, e.g.:" >&2
+        echo "  curl -fsSL https://raw.githubusercontent.com/${GITHUB_REPO}/${GITHUB_BRANCH}/install.sh | sudo bash" >&2
+        exit 1
+    fi
+    command -v curl >/dev/null 2>&1 || { echo "Error: curl is required but not installed." >&2; exit 1; }
+    command -v tar  >/dev/null 2>&1 || { echo "Error: tar is required but not installed." >&2; exit 1; }
+
+    echo "==> Fetching netbox-installer (${GITHUB_REPO}@${GITHUB_BRANCH}) from GitHub..."
+
+    TARBALL_URL="https://github.com/${GITHUB_REPO}/archive/refs/heads/${GITHUB_BRANCH}.tar.gz"
+    TMP_TARBALL="$(mktemp /tmp/netbox-installer-XXXXXX.tar.gz)"
+
+    if ! curl -fsSL -H "User-Agent: netbox-installer" -o "$TMP_TARBALL" "$TARBALL_URL"; then
+        rm -f "$TMP_TARBALL"
+        echo "Error: failed to download $TARBALL_URL" >&2
+        echo "Check your network settings / the repo & branch name (NETBOX_INSTALLER_REPO=${GITHUB_REPO}, NETBOX_INSTALLER_BRANCH=${GITHUB_BRANCH})." >&2
+        exit 1
+    fi
+
+    mkdir -p "$INSTALL_SRC_DIR"
+    if ! tar -xzf "$TMP_TARBALL" -C "$INSTALL_SRC_DIR" --strip-components=1; then
+        rm -f "$TMP_TARBALL"
+        echo "Error: failed to extract the downloaded archive." >&2
+        exit 1
+    fi
+    rm -f "$TMP_TARBALL"
+
+    [ -x "$INSTALL_SRC_DIR/install.sh" ] || chmod +x "$INSTALL_SRC_DIR/install.sh"
+    echo "==> Fetched to $INSTALL_SRC_DIR, continuing installation..."
+    echo ""
+
+    # Re-exec the real install.sh from the now-local checkout, forwarding
+    # any arguments. Try to re-attach the controlling terminal for stdin so
+    # interactive prompts still work even though this script was piped in;
+    # fall back silently to inherited stdin if no controlling tty exists
+    # (e.g. CI, containers, non-interactive shells).
+    if { exec 3<>/dev/tty; } 2>/dev/null; then
+        exec "$INSTALL_SRC_DIR/install.sh" "$@" <&3 3<&-
+    else
+        exec "$INSTALL_SRC_DIR/install.sh" "$@"
+    fi
+fi
+
+if [ ! -d "$SCRIPT_DIR/lib" ]; then
+    echo "Error: could not find the 'lib/' directory next to install.sh (looked in: $SCRIPT_DIR)" >&2
+    echo "" >&2
+    echo "This usually means install.sh was copied/run on its own, separate from the" >&2
+    echo "rest of the netbox-installer/ folder. Re-extract the full archive and run" >&2
+    echo "install.sh from inside it, e.g.:" >&2
+    echo "  tar -xzf netbox-installer.tar.gz" >&2
+    echo "  cd netbox-installer" >&2
+    echo "  sudo ./install.sh" >&2
+    exit 1
+fi
+
 CONFIG_FILE="$SCRIPT_DIR/config/defaults.conf"
 CLI_YES="false"
 CLI_WEB=""
