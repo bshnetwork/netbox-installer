@@ -47,15 +47,6 @@ curl -fsSL https://raw.githubusercontent.com/bshnetwork/netbox-installer/main/up
 curl -fsSL https://raw.githubusercontent.com/bshnetwork/netbox-installer/main/install.sh | sudo bash -s -- --web apache -y
 ```
 
-This downloads the full repo into `/opt/netbox-installer` (override with
-`NETBOX_INSTALLER_SRC_DIR=/some/path`) and re-runs the real installer from
-there, so `uninstall.sh` / `update.sh` are available afterward too:
-```bash
-cd /opt/netbox-installer
-sudo ./update.sh
-sudo ./uninstall.sh
-```
-
 
 ### **Local install** (clone/download the repo yourself first):
 
