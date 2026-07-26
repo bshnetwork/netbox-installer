@@ -1,0 +1,9 @@
+command = '@@NETBOX_DIR@@/venv/bin/gunicorn'
+pythonpath = '@@NETBOX_DIR@@/netbox'
+bind = '127.0.0.1:@@GUNICORN_PORT@@'
+workers = 5
+threads = 3
+timeout = 120
+max_requests = 5000
+max_requests_jitter = 500
+user = '@@NETBOX_RUN_USER@@'
