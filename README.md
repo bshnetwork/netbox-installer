@@ -1,3 +1,46 @@
+<p align="center">
+  <img src="assets/banner.png" alt="netbox-installer — NetBox Installer by Babak Keshavarz" width="100%">
+</p>
+
+<h3 align="center">A modular, multi-OS installer for NetBox</h3>
+
+<p align="center">
+  <a href="https://github.com/bshnetwork/netbox-installer/stargazers">
+    <img src="https://img.shields.io/github/stars/bshnetwork/netbox-installer?style=for-the-badge&logo=github&color=58a6ff" alt="Stars">
+  </a>
+  <a href="https://github.com/bshnetwork/netbox-installer/network/members">
+    <img src="https://img.shields.io/github/forks/bshnetwork/netbox-installer?style=for-the-badge&logo=github&color=7ee787" alt="Forks">
+  </a>
+  <a href="https://github.com/bshnetwork/netbox-installer/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/bshnetwork/netbox-installer?style=for-the-badge&color=f778ba" alt="License">
+  </a>
+  <a href="https://github.com/bshnetwork/netbox-installer/issues">
+    <img src="https://img.shields.io/github/issues/bshnetwork/netbox-installer?style=for-the-badge&color=ffbd2e" alt="Issues">
+  </a>
+  <a href="https://github.com/bshnetwork/netbox-installer/commits/main">
+    <img src="https://img.shields.io/github/last-commit/bshnetwork/netbox-installer?style=for-the-badge&color=58a6ff" alt="Last Commit">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://linkedin.com/in/babak-keshavarz-aa4011413">
+    <img src="https://img.shields.io/badge/LinkedIn-Babak%20Keshavarz-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn">
+  </a>
+  <a href="https://github.com/bshnetwork">
+    <img src="https://img.shields.io/badge/GitHub-bshnetwork-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub">
+  </a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-Debian%20|%20Ubuntu%20|%20RHEL%20|%20Rocky%20|%20Alma%20|%20FreeBSD-blue?style=flat-square" alt="Platforms">
+  <img src="https://img.shields.io/badge/Web%20Server-Nginx%20|%20Apache-green?style=flat-square" alt="Web Server">
+  <img src="https://img.shields.io/badge/Python-3.12%2B-yellow?style=flat-square&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/PostgreSQL-13%2B-336791?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL">
+  <img src="https://img.shields.io/badge/Redis-4.0%2B-DC382D?style=flat-square&logo=redis&logoColor=white" alt="Redis">
+</p>
+
+---
+
 # 🌐 NetBox Installer
 
 > **A modular, multi-OS installer for NetBox — the premier open-source IPAM and DCIM tool**
