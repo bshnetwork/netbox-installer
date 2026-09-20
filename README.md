@@ -1,6 +1,3 @@
-#<p align="center">
-  #<img src="assets/banner.png" alt="netbox-installer — NetBox Installer by Babak Keshavarz" width="100%">
-#</p>
 
 <h3 align="center">A modular, multi-OS installer for NetBox</h3>
 
